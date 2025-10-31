@@ -7,7 +7,7 @@ import easyocr
 #Fazer a extração de cada texto de imagem junto da sua descrição e nome
 # Enviar para a llm
 
-reader = easyocr.Reader(lang_list= "pt", gpu=True)
+reader = easyocr.Reader(lang_list=["pt"], gpu=True)
 
 import numpy as np
 
@@ -53,7 +53,7 @@ def detect_text_boxes(gray):
         if hh < 10:
             continue
         ar = ww / float(hh + 1e-6)
-        if ar < 0.2 and ar > 40:
+        if ar < 0.2 or ar > 40:
             continue
         raw_boxes.append([x,y,x+ww,y+hh])
 
@@ -172,7 +172,7 @@ def text_fetch(path_img, iou_merge=0.35, sim_thresh=0.85):
     for i, (b1, t1) in enumerate(textos_com_coords):
         duplicate = False
         for j, (b2, t2) in enumerate(filtro):
-            if iou(b1, b2) > iou_merge and Levenshtein.ratio(b1, b2) > sim_thresh:
+            if iou(b1, b2) > iou_merge and Levenshtein.ratio(t1, t2) > sim_thresh:
                 duplicate = True
                 break
         if not duplicate:
@@ -182,5 +182,6 @@ def text_fetch(path_img, iou_merge=0.35, sim_thresh=0.85):
 
     texto_formatado = ' '.join(t for _,t in filtro)
 
-    print(f"Caminho: {path_img}\n")
-    print(f"Texto Extraido: {texto_formatado}\n")
+    with open(path_img + "-extracao.txt", "w", encoding="utf-8") as file:
+        file.write(f"Endereço de imagem: {path_img}\n")
+        file.write(f"Conteúdo: {texto_formatado}\n")
