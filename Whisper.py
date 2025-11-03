@@ -1,6 +1,10 @@
 import os
 import whisper
-from moviepy import VideoFileClip, AudioFileClip
+from moviepy.utils import VideoFileClip, AudioFileClip
+
+os.environ["PATH"] += os.pathsep + os.path.abspath("./ffmpeg/bin")
+
+whisper = whisper.load_model("large")
 
 def format_time(s):
         h = int(s // 3600)
@@ -10,10 +14,9 @@ def format_time(s):
         return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 def audio_fetch(file):
-    result = whisper.transcribe(audio = file, language="pt")
     if not has_audio(file, "audio") and not has_audio(file, "video"):
         return "O arquivo não contém áudio."
-
+    result = whisper.transcribe(audio=file, language="pt")
     output = ""  
 
     for i, seg in enumerate(result['segments'], start=1):
@@ -38,3 +41,5 @@ def has_audio(file_path, type):
             return clip.audio is not None
         except Exception:
             return False
+        
+print(audio_fetch("Integrantes de facção enviam áudios para mãe de adolescente encontrada morta.mp3"))

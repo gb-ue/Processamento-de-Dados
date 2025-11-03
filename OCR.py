@@ -142,47 +142,18 @@ def deskew_crop(img_bgr, box, binary):
     warped = cv.warpPerspective(img_bgr, M, (width, height))
     return warped
 
-
-def validar_result(texto, processado, tolerancia=0.7):
-    texto = texto.strip()
-    processado = processado.strip()
-    if not processado:
-        return False
-    similaridade = Levenshtein.ratio(texto, processado)
-    return tolerancia <= similaridade
-
-def text_fetch(path_img, iou_merge=0.35, sim_thresh=0.85):
-    im = cv.imread(path_img)
-    if im is None:
-        return ""
-    img, gray = processing(im, max_size=1600)
-    boxes, binary = detect_text_boxes(gray)
-    boxes = sorted(boxes, key=lambda b: (round(b[1]/50), b[0]))
-
-    textos_com_coords = []
-
-    for box in boxes:
-        crop = deskew_crop(img, box, binary)
-        result_crop = reader.readtext(crop, detail=0, paragraph=False, contrast_ths=0.05, adjust_contrast=0.7)
-        if result_crop:
-            texto = ' '.join(result_crop).strip()
-            if texto:
-                textos_com_coords.append((box, texto))
-
-    filtro = []
-    for i, (b1, t1) in enumerate(textos_com_coords):
-        duplicate = False
-        for j, (b2, t2) in enumerate(filtro):
-            if iou(b1, b2) > iou_merge and Levenshtein.ratio(t1, t2) > sim_thresh:
-                duplicate = True
-                break
-        if not duplicate:
-            filtro.append((b1, t1))
-
-    filtro = sorted(filtro, key=lambda x: (x[0][1], x[0][0]))
-
-    texto_formatado = ' '.join(t for _,t in filtro)
-
-    output = f"Caminho da Imagem: {path_img}\nDescrição: {texto_formatado}"
+def text_fetch(path_img):
+    img = cv.imread(path_img)
+    result = reader.readtext(img, detail=0, paragraph=True)
+    if not result or len(" ".join(result)) < 10:
+        _, gray = processing(img)
+        boxes, _ = detect_text_boxes(gray)
+        crops = [deskew_crop(img, b, gray) for b in boxes]
+        result = []
+        for c in crops:
+            r = reader.readtext(c, detail=0, paragraph=True)
+            result.extend(r)
+    texto = " ".join(result)
+    output = f"Caminho da Imagem: {path_img}\nDescrição: {texto}"
 
     return output
