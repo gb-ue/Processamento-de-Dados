@@ -5,8 +5,9 @@ import easyocr
 
 #Abrir um caminho pra pasta de imagens
 #Fazer a extração de cada texto de imagem junto da sua descrição e nome
-# Enviar para a llm
+#Enviar para a llm
 
+#Trocar gpu=True por False caso seja necessário rodar em CPU. Aviso: Mais lento.
 reader = easyocr.Reader(lang_list=["pt"], gpu=True)
 
 import numpy as np
@@ -182,6 +183,6 @@ def text_fetch(path_img, iou_merge=0.35, sim_thresh=0.85):
 
     texto_formatado = ' '.join(t for _,t in filtro)
 
-    with open(path_img + "-extracao.txt", "w", encoding="utf-8") as file:
-        file.write(f"Endereço de imagem: {path_img}\n")
-        file.write(f"Conteúdo: {texto_formatado}\n")
+    output = f"Caminho da Imagem: {path_img}\nDescrição: {texto_formatado}"
+
+    return output
